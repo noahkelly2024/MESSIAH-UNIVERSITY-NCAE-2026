@@ -619,28 +619,48 @@
                     </tr>
                 </table>
 
-                <h3>⚡ Quick Start (10 Minutes)</h3>
-                <div class="section">
-                    <ol style="line-height: 2;">
-                        <li><strong>Copy scripts to ALL VMs:</strong>
-                            <pre><code>sudo mkdir -p /opt/ncae
-sudo cp -r * /opt/ncae/
-cd /opt/ncae
-sudo chmod +x *.sh</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                        </li>
-                        <li><strong>Install dependencies:</strong>
-                            <pre><code>sudo ./install_deps.sh</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                        </li>
-                        <li><strong>Deploy (auto-detects VM role):</strong>
-                            <pre><code>sudo ./deploy_all.sh</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                        </li>
-                        <li><strong>Verify monitor running:</strong>
-                            <pre><code>tmux attach -t ncae_monitor</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                        </li>
-                        <li><strong>Check scoring status:</strong>
-                            <pre><code>sudo ./score_check.sh</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                        </li>
-                    </ol>
+                <h3>⚡ Quick Start</h3>
+                <div class="alert alert-success">
+                    <strong>⚡ Each VM Deploys Independently - 25 Minutes Total (All VMs in Parallel)</strong><br>
+                    No complex distribution - each machine configures itself!
+                </div>
+
+                <h4>Step 1: Configure Network on Each VM (2 min - all VMs in parallel)</h4>
+                <p>Via noVNC on each VM, paste the appropriate network config from the system tabs. Each script is only 400-500 bytes!</p>
+
+
+                <h4>Step 2: Clone &amp; Deploy on Each VM (3-5 min per VM - run in parallel)</h4>
+                <p>On EACH VM individually, run these commands:</p>
+                <pre><code># Install git (Ubuntu: apt, Rocky: dnf)
+sudo apt install -y git || sudo dnf install -y git
+
+# Clone repository
+sudo git clone --depth 1 https://github.com/noahkelly2024/MU_NCAE.git /opt/ncae
+cd /opt/ncae && sudo chmod +x *.sh
+
+# Run deployment
+sudo ./deploy_all.sh
+
+# Interactive menu will appear - select your machine type:
+# 1 = Web Server
+# 2 = DNS Server
+# 3 = Database
+# 4 = Shell/SMB
+# 5 = Backup
+# 6 = Router</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                <h4>What Happens Automatically:</h4>
+                <ul style="line-height: 2;">
+                    <li>✅ <strong>Phase 1:</strong> Install dependencies (curl, wget, ufw, fail2ban, auditd, etc.)</li>
+                    <li>✅ <strong>Phase 2:</strong> Run reconnaissance report</li>
+                    <li>✅ <strong>Phase 3:</strong> Execute machine-specific hardening script</li>
+                    <li>✅ <strong>Phase 4:</strong> Start continuous monitoring in tmux</li>
+                    <li>✅ <strong>Phase 5:</strong> Configure automated backups</li>
+                    <li>✅ <strong>Phase 6:</strong> Lock scripts with immutable flags</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>Total Time:</strong> ~25 minutes for all 5 VMs deploying in parallel (or 3-5 min per VM if done sequentially)
                 </div>
 
                 <h3>🔑 Critical Actions at 10:30 AM</h3>
@@ -1723,87 +1743,37 @@ sudo passwd -S username</code><button class="copy-btn" onclick="copyCode(this)">
                     <strong>⚠️ CRITICAL:</strong> Router MUST be configured for Shell/SMB to reach internal VMs! The router provides NAT and routing between external LAN (172.18.x.x) and internal LAN (192.168.<span class="team-num">11</span>.x).
                 </div>
                 
-                <div class="alert alert-info">
-                    Router deployment generates a MikroTik config file - run from Shell/SMB VM or any Linux VM with internet
-                </div>
 
-                <h4>Quick Router Setup (Run from Shell/SMB)</h4>
-                <pre><code># On Shell/SMB VM (after network configured):
-cd /opt/ncae
-sudo ./harden_router.sh <span class="team-num">11</span> <span class="ip-172">172.18.13.11</span> admin
-
-# Script will attempt auto-push via SCP
-# If successful, router is configured automatically!</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-
-                <h4>Complete Router Configuration Script</h4>
-                <p>If you need to configure router manually or auto-push fails, use this complete configuration:</p>
-                <button class="collapsible">View Complete Router Config</button>
-                <div class="collapsible-content">
-                    <div class="collapsible-content-inner">
-                        <p><strong>SSH to router and paste this:</strong></p>
-                        <pre><code># MikroTik Router Configuration - Team <span class="team-num">11</span>
-# SSH to router: ssh admin@<span class="ip-172">172.18.13.11</span>
-# Password: CantGuessThis67!
-
-# Disable insecure services
-/ip service disable telnet,ftp,www,api,api-ssl,winbox
-/ip service set ssh port=22
-
-# Configure interfaces
-/interface ethernet
-set [ find default-name=ether1 ] comment="WAN/External" name=ether1
-set [ find default-name=ether2 ] comment="LAN/Internal" name=ether2
-
-# Set IP addresses
-/ip address
-add address=<span class="ip-172">172.18.13.11</span>/16 interface=ether1 comment="ncae-wan"
-add address=<span class="ip-192-1">192.168.11.1</span>/24 interface=ether2 comment="ncae-lan"
-
-# NAT masquerade (critical for internal VMs to reach internet)
-/ip firewall nat
-add chain=srcnat out-interface=ether1 action=masquerade comment="ncae-masquerade"
-
-# Port forwards for scoring
-add chain=dstnat dst-address=<span class="ip-172">172.18.13.11</span> protocol=tcp dst-port=80 action=dst-nat to-addresses=<span class="ip-192-5">192.168.11.5</span> to-ports=80 comment="ncae-http"
-add chain=dstnat dst-address=<span class="ip-172">172.18.13.11</span> protocol=tcp dst-port=443 action=dst-nat to-addresses=<span class="ip-192-5">192.168.11.5</span> to-ports=443 comment="ncae-https"
-add chain=dstnat dst-address=<span class="ip-172">172.18.13.11</span> protocol=tcp dst-port=53 action=dst-nat to-addresses=<span class="ip-192-12">192.168.11.12</span> to-ports=53 comment="ncae-dns-tcp"
-add chain=dstnat dst-address=<span class="ip-172">172.18.13.11</span> protocol=udp dst-port=53 action=dst-nat to-addresses=<span class="ip-192-12">192.168.11.12</span> to-ports=53 comment="ncae-dns-udp"
-
-# Firewall rules
-/ip firewall filter
-# Allow established/related
-add chain=input connection-state=established,related action=accept comment="ncae-input-established"
-add chain=forward connection-state=established,related action=accept comment="ncae-forward-established"
-
-# Allow SSH to router
-add chain=input protocol=tcp dst-port=22 action=accept comment="ncae-ssh"
-
-# Allow ICMP (scoring!)
-add chain=input protocol=icmp action=accept comment="ncae-icmp"
-
-# Allow from internal LAN
-add chain=input src-address=<span class="ip-range">192.168.11.0/24</span> action=accept comment="ncae-lan-input"
-
-# Forward internal to external
-add chain=forward src-address=<span class="ip-range">192.168.11.0/24</span> action=accept comment="ncae-lan-forward"
-
-# Forward port forwards to internal
-add chain=forward dst-address=<span class="ip-192-5">192.168.11.5</span> protocol=tcp dst-port=80,443 action=accept comment="ncae-web-forward"
-add chain=forward dst-address=<span class="ip-192-12">192.168.11.12</span> protocol=tcp dst-port=53 action=accept comment="ncae-dns-tcp-forward"
-add chain=forward dst-address=<span class="ip-192-12">192.168.11.12</span> protocol=udp dst-port=53 action=accept comment="ncae-dns-udp-forward"
-
-# Drop everything else
-add chain=input action=drop comment="ncae-input-drop"
-add chain=forward action=drop comment="ncae-forward-drop"
-
-# Set default route (if needed)
-/ip route
-add dst-address=0.0.0.0/0 gateway=172.18.0.1 comment="ncae-default-route"
-
-# Change admin password (do this LAST!)
-/user set admin password=NewSecurePassword123!</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                    </div>
-                </div>
+                <h4>Full Router Setup</h4>
+                <pre><code>/ip route add gateway=172.18.0.1
+/ip address add address=172.18.13.11/16 interface=ether1 comment="EXTERNAL"
+/ip address add address=192.168.11.1/24 interface=ether2 comment="INTERNAL"
+/ip neighbor discovery-settings set discover-interface-list=none
+/tool mac-server set allowed-interface-list=none
+/tool mac-server mac-winbox set allowed-interface-list=none
+/tool bandwidth-server set enabled=no
+/snmp set enabled=no
+/ip upnp set enabled=no
+/ip dns set allow-remote-requests=no
+/ip firewall filter remove [find]
+/ip firewall nat remove [find]
+/ip firewall filter add chain=input protocol=icmp action=accept
+/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=80 action=dst-nat to-addresses=192.168.11.5 comment="www-80"
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=443 action=dst-nat to-addresses=192.168.11.5 comment="www-443"
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=53 action=dst-nat to-addresses=192.168.11.12 comment="dns-tcp"
+/ip firewall nat add chain=dstnat protocol=udp dst-port=53 action=dst-nat to-addresses=192.168.11.12 comment="dns-udp"
+/ip firewall filter add chain=input connection-state=established,related action=accept comment="input-established"
+/ip firewall filter add chain=input connection-state=invalid action=drop comment="input-drop-invalid"
+/ip firewall filter add chain=input action=log log-prefix="DROP-IN: " comment="log-input"
+/ip firewall filter add chain=input action=drop comment="drop-input"
+/ip firewall filter add chain=forward connection-state=established,related action=accept comment="forward-established"
+/ip firewall filter add chain=forward connection-state=invalid action=drop comment="forward-invalid"
+/ip firewall filter add chain=forward src-address=192.168.11.0/24 action=accept comment="forward-lan-out"
+/ip firewall filter add chain=forward dst-address=192.168.1.0/24 action=accept comment="forward-scoring-to-lan"
+/ip firewall filter add chain=forward src-address=172.18.0.0/16 dst-address=192.168.11.0/24 action=accept comment="forward-ext-to-int"
+/ip firewall filter add chain=forward action=log log-prefix="DROP-FWD: " comment="log-forward"
+/ip firewall filter add chain=forward action=drop comment="drop-forward"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
                 <h3>📋 Scoring (500 pts)</h3>
                 <table>
@@ -1821,10 +1791,9 @@ add dst-address=0.0.0.0/0 gateway=172.18.0.1 comment="ncae-default-route"
 
                 <h3>🔧 Key Features</h3>
                 <ul style="line-height: 2;">
-                    <li>✅ Disabled telnet, FTP, HTTP, API, Winbox</li>
-                    <li>✅ SSH only (port 22)</li>
-                    <li>✅ WAN interface auto-detection</li>
-                    <li>✅ NAT masquerade for internal VMs</li>
+                    <li>✅ Internal and External VLANS working</li>
+                    <li>✅ Disabled telnet, FTP, SSH, HTTP, API, Winbox</li>
+                    <li>✅ NAT masquerade so internal VMs have internet</li>
                     <li>✅ Port forwards: 80, 443, 53 (TCP+UDP)</li>
                     <li>✅ Firewall rules (INPUT, FORWARD)</li>
                     <li>✅ Connection tracking</li>
@@ -1858,23 +1827,6 @@ add dst-address=0.0.0.0/0 gateway=172.18.0.1 comment="ncae-default-route"
                     </tr>
                 </table>
 
-                <h3>🛠️ Manual Application</h3>
-                <button class="collapsible">If Auto-Push Fails</button>
-                <div class="collapsible-content">
-                    <div class="collapsible-content-inner">
-                        <ol style="line-height: 2;">
-                            <li>Script saves config to: <code>/root/ncae_router_commands.rsc</code></li>
-                            <li>SSH to router:
-                                <pre><code>ssh admin@<span class="ip-172">172.18.13.11</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                            </li>
-                            <li>Copy/paste entire .rsc file contents into router terminal</li>
-                            <li>Or use /import:
-                                <pre><code>/import file-name=ncae_router_commands.rsc</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-                            </li>
-                        </ol>
-                    </div>
-                </div>
-
                 <h3>🧪 Verification Commands</h3>
                 <pre><code># Check port forwards
 /ip firewall nat print where comment~"ncae"
@@ -1889,7 +1841,9 @@ add dst-address=0.0.0.0/0 gateway=172.18.0.1 comment="ncae-default-route"
 ping <span class="ip-172">172.18.13.11</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
                 <h3>🔐 Credentials</h3>
-                <pre><code>sudo cat /root/ncae_credentials_router.txt</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+                <pre><code>sudo cat /root/ncae_credentials_router.txt
+# Update password
+/user set admin password=NewSecurePassword123!</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
             </div>
 
             <!-- SCRIPTS TAB -->
@@ -1949,7 +1903,7 @@ ping <span class="ip-172">172.18.13.11</span></code><button class="copy-btn" onc
                 <h3>🛠️ Utility Scripts</h3>
                 <div class="script-grid">
                     <div class="script-card">
-                        <h4>00_recon.sh</h4>
+                        <h4>recon.sh</h4>
                         <p>Pre-hardening reconnaissance - run FIRST on every VM</p>
                         <span class="script-badge">Recon</span>
                     </div>
@@ -1993,48 +1947,6 @@ ping <span class="ip-172">172.18.13.11</span></code><button class="copy-btn" onc
                     </div>
                 </div>
 
-                <h3>📥 Simple Individual Deployment</h3>
-                <div class="alert alert-success">
-                    <strong>⚡ Each VM Deploys Independently - 25 Minutes Total (All VMs in Parallel)</strong><br>
-                    No complex distribution - each machine configures itself!
-                </div>
-
-                <h4>Step 1: Configure Network on Each VM (2 min - all VMs in parallel)</h4>
-                <p>Via noVNC on each VM, paste the appropriate network config from the system tabs. Each script is only 400-500 bytes!</p>
-
-                <h4>Step 2: Clone & Deploy on Each VM (3-5 min per VM - run in parallel)</h4>
-                <p>On EACH VM individually, run these commands:</p>
-                <pre><code># Install git (Ubuntu: apt, Rocky: dnf)
-sudo apt install -y git || sudo dnf install -y git
-
-# Clone repository
-sudo git clone --depth 1 https://github.com/noahkelly2024/MU_NCAE.git /opt/ncae
-cd /opt/ncae && sudo chmod +x *.sh
-
-# Run deployment
-sudo ./deploy_all.sh
-
-# Interactive menu will appear - select your machine type:
-# 1 = Web Server
-# 2 = DNS Server
-# 3 = Database
-# 4 = Shell/SMB
-# 5 = Backup
-# 6 = Router</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
-
-                <h4>What Happens Automatically:</h4>
-                <ul style="line-height: 2;">
-                    <li>✅ <strong>Phase 1:</strong> Install dependencies (curl, wget, ufw, fail2ban, auditd, etc.)</li>
-                    <li>✅ <strong>Phase 2:</strong> Run reconnaissance report</li>
-                    <li>✅ <strong>Phase 3:</strong> Execute machine-specific hardening script</li>
-                    <li>✅ <strong>Phase 4:</strong> Start continuous monitoring in tmux</li>
-                    <li>✅ <strong>Phase 5:</strong> Configure automated backups</li>
-                    <li>✅ <strong>Phase 6:</strong> Lock scripts with immutable flags</li>
-                </ul>
-
-                <div class="alert alert-info">
-                    <strong>Total Time:</strong> ~25 minutes for all 5 VMs deploying in parallel (or 3-5 min per VM if done sequentially)
-                </div>
             </div>
 
             <!-- TIMELINE TAB -->
@@ -2043,7 +1955,7 @@ sudo ./deploy_all.sh
                 
                 <div class="timeline">
                     <div class="timeline-item">
-                        <div class="timeline-time">9:00 AM - Competition Briefing</div>
+                        <div class="timeline-time">9:30 AM - Competition Briefing</div>
                         <ul class="checklist">
                             <li>Team check-in</li>
                             <li>Receive network topology</li>
@@ -2053,9 +1965,9 @@ sudo ./deploy_all.sh
                     </div>
 
                     <div class="timeline-item">
-                        <div class="timeline-time">9:30 AM - Access Granted & Network Config</div>
+                        <div class="timeline-time">10:30 AM - Access Granted & Network Config</div>
                     <div class="timeline-item">
-                        <div class="timeline-time">9:30-9:32 AM - Configure Networks</div>
+                        <div class="timeline-time">10:30-10:35 AM - Configure Networks</div>
                         <ul class="checklist">
                             <li>Open all 5 VMs via noVNC (separate browser tabs)</li>
                             <li>Paste network config on each VM (see system tabs - only 400-500 bytes each!)</li>
@@ -2064,7 +1976,7 @@ sudo ./deploy_all.sh
                     </div>
 
                     <div class="timeline-item">
-                        <div class="timeline-time">9:32-9:55 AM - Clone & Deploy (All VMs in Parallel)</div>
+                        <div class="timeline-time">10:35-11:00 AM - Clone & Deploy (All VMs in Parallel)</div>
                         <div class="alert alert-success">
                             <strong>⚡ Individual Deployment</strong> - Each VM configures itself independently
                         </div>
@@ -2079,33 +1991,13 @@ sudo ./deploy_all.sh
                     </div>
 
                     <div class="timeline-item">
-                        <div class="timeline-time">9:55-10:00 AM - Verification</div>
-                        <ul class="checklist">
-                            <li>Verify monitors: <code>tmux attach -t ncae_monitor</code> on each VM</li>
-                            <li>Run <code>score_check.sh</code> on each VM</li>
-                            <li>Configure router: See Router tab for complete config</li>
-                            <li>Verify backups: <code>ls /srv/ncae_backups/</code> on Backup VM</li>
-                        </ul>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">10:00 AM - Scoring Begins</div>
+                        <div class="timeline-time">11:00 AM - Scoring Begins</div>
                         <div class="alert alert-success">
                             <strong>🟢 SCORING ENGINE ACTIVE</strong> - Points start accumulating
                         </div>
                         <ul class="checklist">
                             <li>Verify all services running</li>
                             <li>Run <code>score_check.sh</code> on every VM</li>
-                            <li>Check alerts: <code>tail -f /var/log/ncae_alerts.log</code></li>
-                        </ul>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">10:30 AM - Scoreboard Opens</div>
-                        <div class="alert alert-warning">
-                            <strong>🔑 CRITICAL ACTIONS</strong>
-                        </div>
-                        <ul class="checklist">
                             <li>Submit free CTF flag: <code>c2ctf{welcomeToTheCyberGames!}</code></li>
                             <li>Get scoring SSH pubkey from scoreboard</li>
                             <li>Add SSH key to shell VM: <code>/home/scoring/.ssh/authorized_keys</code></li>
@@ -2115,11 +2007,12 @@ sudo ./deploy_all.sh
                             <li>Submit CSR to CA at <code>172.18.0.38</code></li>
                             <li>Install signed cert when received</li>
                             <li>Verify router DNS port forwards working</li>
+                            <li>Check alerts: <code>tail -f /var/log/ncae_alerts.log</code></li>
                         </ul>
                     </div>
 
                     <div class="timeline-item">
-                        <div class="timeline-time">10:30 AM - 4:00 PM - Active Defense</div>
+                        <div class="timeline-time">11:00 AM - 6:00 PM - Active Defense</div>
                         <div class="alert alert-danger">
                             <strong>🔴 RED TEAM ACTIVE</strong> - Stay vigilant!
                         </div>
@@ -2134,7 +2027,7 @@ sudo ./deploy_all.sh
                     </div>
 
                     <div class="timeline-item">
-                        <div class="timeline-time">4:00 PM - Competition Ends</div>
+                        <div class="timeline-time">6:00 PM - Competition Ends</div>
                         <ul class="checklist">
                             <li>Final <code>score_check.sh</code> on all VMs</li>
                             <li>Screenshot scoreboard</li>
@@ -2144,7 +2037,7 @@ sudo ./deploy_all.sh
                     </div>
 
                     <div class="timeline-item">
-                        <div class="timeline-time">4:30 PM - Awards Ceremony</div>
+                        <div class="timeline-time">6:15 PM - Awards Ceremony</div>
                         <div class="alert alert-success">
                             <strong>🏆 Results announced</strong>
                         </div>
@@ -2249,8 +2142,7 @@ sudo ./deploy_all.sh
                 el.textContent = `192.168.${teamNum}.0/24`;
             });
             
-            // Show confirmation
-            alert(`✅ Updated all IPs for Team ${teamNum}`);
+            // Show confirmation (popup disabled)
         }
 
         // Copy code to clipboard

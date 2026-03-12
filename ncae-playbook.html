@@ -747,7 +747,25 @@ sudo ufw deny from &lt;IP&gt;
 sudo kill -9 &lt;PID&gt;
 
 # Check listening ports
-ss -tulpn</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+ss -tulpn
+
+# User Management
+# Add new user
+sudo useradd -m -s /bin/bash username
+sudo passwd username
+
+# Change user password
+sudo passwd username
+
+# Delete user
+sudo userdel -r username
+
+# List all users
+cut -d: -f1 /etc/passwd
+
+# Lock/unlock user
+sudo usermod -L username  # lock
+sudo usermod -U username  # unlock</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
                 </div>
             </div>
 
@@ -913,7 +931,28 @@ openssl s_client -connect <span class="ip-192-5">192.168.11.5</span>:443 -showce
 # Web integrity check
 sha256sum -c /root/www_baseline.sha256</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
-                <h3>🔐 Credentials</h3>
+                <h3>� User Management</h3>
+                <pre><code># Add new user (Ubuntu)
+sudo useradd -m -s /bin/bash username
+sudo passwd username
+
+# Change user password
+sudo passwd username
+
+# Delete user (and home directory)
+sudo userdel -r username
+
+# List all users with UID >= 1000
+awk -F: '$3 >= 1000 {print $1}' /etc/passwd
+
+# Lock/unlock user account
+sudo usermod -L username  # lock
+sudo usermod -U username  # unlock
+
+# Check user status
+sudo passwd -S username</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                <h3>�🔐 Credentials</h3>
                 <div class="alert alert-info">
                     All credentials saved to: <code>/root/ncae_credentials_www.txt</code> (chmod 600)
                 </div>
@@ -1073,7 +1112,28 @@ dig @<span class="ip-192-12">192.168.11.12</span> www.team<span class="team-num"
 # Test external DNS (requires router forwards)
 dig @<span class="ip-172">172.18.13.11</span> www.team<span class="team-num">11</span>.local</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
-                <h3>🔐 Credentials</h3>
+                <h3>� User Management</h3>
+                <pre><code># Add new user (Rocky Linux)
+sudo useradd -m -s /bin/bash username
+sudo passwd username
+
+# Change user password
+sudo passwd username
+
+# Delete user (and home directory)
+sudo userdel -r username
+
+# List all users with UID >= 1000
+awk -F: '$3 >= 1000 {print $1}' /etc/passwd
+
+# Lock/unlock user account
+sudo usermod -L username  # lock
+sudo usermod -U username  # unlock
+
+# Check user status
+sudo passwd -S username</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                <h3>�🔐 Credentials</h3>
                 <pre><code>sudo cat /root/ncae_credentials_dns.txt</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
             </div>
 
@@ -1212,7 +1272,28 @@ sudo tail -f /var/log/postgresql/postgresql-*.log
 # Check database size
 psql -U scoring -d scoringdb -c "\l+"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
-                <h3>🔐 Credentials</h3>
+                <h3>� User Management</h3>
+                <pre><code># Add new user (Ubuntu)
+sudo useradd -m -s /bin/bash username
+sudo passwd username
+
+# Change user password
+sudo passwd username
+
+# Delete user (and home directory)
+sudo userdel -r username
+
+# List all users with UID >= 1000
+awk -F: '$3 >= 1000 {print $1}' /etc/passwd
+
+# Lock/unlock user account
+sudo usermod -L username  # lock
+sudo usermod -U username  # unlock
+
+# Check user status
+sudo passwd -S username</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                <h3>�🔐 Credentials</h3>
                 <pre><code>sudo cat /root/ncae_credentials_db.txt</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
             </div>
 
@@ -1389,7 +1470,37 @@ ls -lZ /srv/samba/
 # Fix SELinux contexts
 sudo restorecon -Rv /srv/samba/</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
-                <h3>🔐 Credentials</h3>
+                <h3>� User Management</h3>
+                <pre><code># Add new user (Rocky Linux)
+sudo useradd -m -s /bin/bash username
+sudo passwd username
+
+# Change user password
+sudo passwd username
+
+# Delete user (and home directory)
+sudo userdel -r username
+
+# Add Samba user (after creating Linux user)
+sudo smbpasswd -a username
+
+# Change Samba password
+sudo smbpasswd username
+
+# Delete Samba user
+sudo smbpasswd -x username
+
+# List all users with UID >= 1000
+awk -F: '$3 >= 1000 {print $1}' /etc/passwd
+
+# Lock/unlock user account
+sudo usermod -L username  # lock
+sudo usermod -U username  # unlock
+
+# Check user status
+sudo passwd -S username</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                <h3>�🔐 Credentials</h3>
                 <pre><code>sudo cat /root/ncae_credentials_shell.txt</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
             </div>
 
@@ -1556,7 +1667,28 @@ sudo /usr/local/bin/ncae_protect_backups.sh
 # Check immutable files
 lsattr /srv/ncae_backups/www/*/</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
-                <h3>🔐 Credentials</h3>
+                <h3>� User Management</h3>
+                <pre><code># Add new user (Ubuntu)
+sudo useradd -m -s /bin/bash username
+sudo passwd username
+
+# Change user password
+sudo passwd username
+
+# Delete user (and home directory)
+sudo userdel -r username
+
+# List all users with UID >= 1000
+awk -F: '$3 >= 1000 {print $1}' /etc/passwd
+
+# Lock/unlock user account
+sudo usermod -L username  # lock
+sudo usermod -U username  # unlock
+
+# Check user status
+sudo passwd -S username</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                <h3>�🔐 Credentials</h3>
                 <pre><code>sudo cat /root/ncae_credentials_backup.txt</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
             </div>
 

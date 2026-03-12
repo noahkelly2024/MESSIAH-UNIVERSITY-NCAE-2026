@@ -1,10 +1,24 @@
 #!/usr/bin/env bash
 # =============================================================================
-# NCAE Cyber Games 2026 - 00_recon.sh
+# NCAE Cyber Games 2026 - recon.sh
 # Run this FIRST on every VM the moment you get access.
 # Outputs a full picture of what you're defending before touching anything.
 #
 # All output is tee'd to a timestamped log file so you can review later.
+#
+# Credit to Northeast Lakeview College aka NightHax for making this script!
+#
+#      /$$   /$$ /$$           /$$         /$$     /$$   /$$                    
+#     | $$$ | $$|__/          | $$        | $$    | $$  | $$                    
+#     | $$$$| $$ /$$  /$$$$$$ | $$$$$$$  /$$$$$$  | $$  | $$  /$$$$$$  /$$   /$$
+#     | $$ $$ $$| $$ /$$__  $$| $$__  $$|_  $$_/  | $$$$$$$$ |____  $$|  $$ /$$/
+#     | $$  $$$$| $$| $$  \ $$| $$  \ $$  | $$    | $$__  $$  /$$$$$$$ \  $$$$/ 
+#     | $$\  $$$| $$| $$  | $$| $$  | $$  | $$ /$$| $$  | $$ /$$__  $$  >$$  $$ 
+#     | $$ \  $$| $$|  $$$$$$$| $$  | $$  |  $$$$/| $$  | $$|  $$$$$$$ /$$/\  $$
+#     |__/  \__/|__/ \____  $$|__/  |__/   \___/  |__/  |__/ \_______/|__/  \__/
+#                    /$$  \ $$                                                  
+#                   |  $$$$$$/                                                  
+#                    \______/                                                   
 # =============================================================================
 
 # Redirect all stdout + stderr to a timestamped log, and also print to terminal

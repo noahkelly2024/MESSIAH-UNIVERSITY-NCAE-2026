@@ -3,7 +3,7 @@
 # Downloads toolkit from GitHub and distributes to all VMs
 
 set -e
-TEAM=5
+TEAM=11
 GITHUB="https://github.com/YOUR-USERNAME/ncae-toolkit.git"
 
 echo "════════════════════════════════════════════════════════"
